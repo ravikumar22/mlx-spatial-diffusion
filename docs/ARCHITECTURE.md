@@ -53,6 +53,27 @@ Direct hard stitching of latent slices creates visible boundary seam artifacts i
    $$\hat{\epsilon}_t(x, y) = \frac{\sum_{i=1}^N \widetilde{M}_i(x, y) \cdot \epsilon_t^{(i)}(x, y)}{\sum_{i=1}^N \widetilde{M}_i(x, y) + \epsilon_{\text{eps}}}$$
 3. The scheduler then computes the single step forward $Z_{t-1} = \text{Step}(Z_t, \hat{\epsilon}_t)$.
 
+### 2.2 Single-Pass Spatial Attention Masking (The $O(1)$ Region Scaling Engine)
+While multi-pass denoising provides crisp separation, it scales as $O(K \times S)$ where $K$ is the number of regions and $S$ is the number of timesteps. For 5+ characters, inference time explodes.
+
+In **Single-Pass Spatial Attention**, we concatenate all regional text prompts into a unified text sequence:
+$$\mathbf{T}_{\text{unified}} = [\mathbf{T}_1, \mathbf{T}_2, \dots, \mathbf{T}_K] \in \mathbb{R}^{L_{\text{cap}} \times D}$$
+
+We construct a 2D additive attention mask matrix $\mathbf{A} \in \mathbb{R}^{L_{\text{unified}} \times L_{\text{unified}}}$ partitioned into functional blocks:
+
+$$\mathbf{A} = \begin{pmatrix} 
+\mathbf{A}_{\text{img} \to \text{img}} & \mathbf{A}_{\text{img} \to \text{cap}} \\ 
+\mathbf{A}_{\text{cap} \to \text{img}} & \mathbf{A}_{\text{cap} \to \text{cap}} 
+\end{pmatrix}$$
+
+1. **$\mathbf{A}_{\text{img} \to \text{img}} = \mathbf{0}$**: All image tokens attend to all other image tokens with full fidelity, preserving global lighting, perspective, and shadows.
+2. **$\mathbf{A}_{\text{cap} \to \text{unified}} = \mathbf{0}$**: Caption tokens attend freely to maintain semantic self-consistency.
+3. **$\mathbf{A}_{\text{img} \to \text{cap}}$ (Spatial Constraint)**:
+   For an image patch token $i$ at normalized canvas coordinates $(y_i, x_i)$ and caption token $j$ belonging to prompt $k$:
+   $$\mathbf{A}_{\text{img} \to \text{cap}}(i, j) = \begin{cases} 0.0 & \text{if } (y_i, x_i) \in \text{Region } k \\ -\infty & \text{otherwise} \end{cases}$$
+
+This enforces zero concept bleed inside Apple MLX's `scaled_dot_product_attention` kernel in a **single forward pass per step ($O(1)$ with respect to region count)**.
+
 ---
 
 ## 3. Apple Silicon & MLX Optimizations

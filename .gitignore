@@ -43,6 +43,7 @@ venv.bak/
 
 # Model weights & cache
 models/
+checkpoints/
 *.safetensors
 *.bin
 *.ckpt
@@ -54,6 +55,10 @@ outputs/
 *.jpg
 *.jpeg
 *.webp
+
+# Track demo visual assets
+!assets/
+!assets/**
 
 # IDEs
 .idea/
