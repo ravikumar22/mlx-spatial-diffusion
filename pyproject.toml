@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mlx-spatial-diffusion"
+version = "0.1.0"
+description = "Regional Prompting & MultiDiffusion natively built for Apple Silicon using MLX"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["apple-silicon", "mlx", "diffusion", "flux", "regional-prompting", "multidiffusion", "ai-art"]
+authors = [
+    { name = "MLX Spatial Diffusion Contributors" }
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: MacOS :: MacOS X",
+]
+dependencies = [
+    "mlx>=0.16.0",
+    "numpy>=1.24.0",
+    "Pillow>=9.5.0",
+    "tqdm>=4.65.0",
+    "mflux>=0.4.0",
+    "gradio>=4.0.0",
+]
+
+[project.scripts]
+mlx-spatial = "mlx_spatial_diffusion.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mlx_spatial_diffusion*"]
