@@ -6,6 +6,7 @@ from mlx_spatial_diffusion.core.mask import Region, RegionMaskGenerator, build_g
 from mlx_spatial_diffusion.core.blending import FeatheredBlender
 from mlx_spatial_diffusion.core.scheduler import SpatialFlowMatchScheduler
 from mlx_spatial_diffusion.pipeline import SpatialPipeline
+from mlx_spatial_diffusion.models.z_image_spatial import SpatialZImageTurbo
 
 __all__ = [
     "Region",
@@ -14,5 +15,6 @@ __all__ = [
     "FeatheredBlender",
     "SpatialFlowMatchScheduler",
     "SpatialPipeline",
+    "SpatialZImageTurbo",
     "__version__",
 ]

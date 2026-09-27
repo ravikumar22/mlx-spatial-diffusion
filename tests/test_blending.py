@@ -62,6 +62,27 @@ class TestFeatheredBlender(unittest.TestCase):
         # Corner should fall back to base prediction 1.0
         self.assertAlmostEqual(blended[0, 0, 0, 0].item(), 1.0, places=2)
 
+    def test_channels_first_blending(self):
+        # Shape used by Z-Image: (16, 1, 16, 16)
+        r1 = Region(box=[0.0, 0.0, 1.0, 0.5], prompt="Left", feather_radius=2)
+        m1 = self.gen.generate_feathered_mask(r1)
+        pred1 = mx.ones((16, 1, 16, 16)) * 10.0
+
+        r2 = Region(box=[0.0, 0.5, 1.0, 1.0], prompt="Right", feather_radius=2)
+        m2 = self.gen.generate_feathered_mask(r2)
+        pred2 = mx.ones((16, 1, 16, 16)) * (-10.0)
+
+        blended = self.blender.blend_spatial(
+            regional_predictions=[pred1, pred2],
+            regional_masks=[m1, m2],
+        )
+
+        self.assertEqual(blended.shape, (16, 1, 16, 16))
+        # Deep inside left half
+        self.assertAlmostEqual(blended[5, 0, 8, 2].item(), 10.0, places=2)
+        # Deep inside right half
+        self.assertAlmostEqual(blended[5, 0, 8, 14].item(), -10.0, places=2)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -41,10 +41,29 @@ class FeatheredBlender:
 
         target_shape = regional_predictions[0].shape
         accumulated_pred = mx.zeros(target_shape, dtype=regional_predictions[0].dtype)
-        accumulated_weight = mx.zeros((1, target_shape[1], target_shape[2], 1), dtype=mx.float32)
+
+        # Detect spatial layout: NHWC vs CNHW/NCHW
+        is_channels_first = False
+        if len(target_shape) == 4 and regional_masks:
+            m_h, m_w = regional_masks[0].shape[1], regional_masks[0].shape[2]
+            if target_shape[2] == m_h and target_shape[3] == m_w:
+                is_channels_first = True
+
+        adapted_masks = []
+        for m in regional_masks:
+            if is_channels_first and m.ndim == 4 and m.shape[-1] == 1:
+                # Transpose (1, H, W, 1) -> (1, 1, H, W)
+                adapted_masks.append(mx.transpose(m, (0, 3, 1, 2)))
+            else:
+                adapted_masks.append(m)
+
+        if is_channels_first:
+            accumulated_weight = mx.zeros((1, 1, target_shape[2], target_shape[3]), dtype=mx.float32)
+        else:
+            accumulated_weight = mx.zeros((1, target_shape[1], target_shape[2], 1), dtype=mx.float32)
 
         # Accumulate regional predictions weighted by their feathered masks
-        for pred, mask in zip(regional_predictions, regional_masks):
+        for pred, mask in zip(regional_predictions, adapted_masks):
             accumulated_pred = accumulated_pred + (pred * mask)
             accumulated_weight = accumulated_weight + mask
 
